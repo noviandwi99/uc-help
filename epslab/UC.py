@@ -4,12 +4,11 @@ import pandas as pd
 import os
 import datetime
 import copy
-from . import DatasetType
 
 ## Main Function ##
 class UC:
 	"""Make Matrices necessary for cplex."""
-	def __init__(self, case_name, constraint, data_path, data_type):
+	def __init__(self, constraint, data_path, data_type, case_name=""):
 		self.tic=datetime.datetime.now()
 		self.caseName=case_name
 		self.globalVar()
@@ -32,7 +31,7 @@ class UC:
 				self.prepare_dataset(data)
 				self.run_UC()
 		else:
-			self.prepare_dataset()
+			self.prepare_dataset(self.dataList[0])
 			self.run_UC()
 
 	def inputDataPath(self,dataPath):
@@ -48,10 +47,12 @@ class UC:
 	
 	def prepare_dataset(self, data):
 		if self.data_type == "EXCEL":
+			file_name = os.path.splitext(data)[0]
 			file_path = os.path.join(self.dataPath, data)
 			self.excelFile=pd.ExcelFile(file_path)
-			self.sheet_names = self.excelFile.sheet_names
 			
+			self.caseName = "Simulasi_" + file_name
+
 			self.inputDataExcel()
 		elif self.data_type == "CSV":
 			for i in range(len(self.dataList)):
@@ -134,49 +135,27 @@ class UC:
 		epsilonNumber=1/cplex.infinity
 
 	def inputDataExcel(self):
-		for sheetName in self.sheet_names:
-			if sheetName=='standardGenData':
-				self.standardGenData=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
-			elif sheetName=='costGenData':
-				self.costGenData=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
-			elif sheetName=='freqRegulationGenData':
-				self.freqRegulationGenData=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
-			elif sheetName=='continuityGenData':
-				self.continuityGenData=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
-			elif sheetName=='loadData':
-				self.loadData=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
-			elif sheetName=='powerSun':
-				self.powerSun=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
-			elif sheetName=='powerWind':
-				self.powerWind=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
-			elif sheetName=='SRContingency':
-				self.SRContingency=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
-			elif sheetName=='SRPower':
-				self.SRPower=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
-			elif sheetName=='SRPercentage':
-				self.SRPercentage=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
-			elif sheetName=='busLoad':
-				self.busLoad=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
-			elif sheetName=='busSun':
-				self.busSun=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
-			elif sheetName=='busWind':
-				self.busWind=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
-			elif sheetName=='busData':
-				self.busData=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
-			elif sheetName=='branchData':
-				self.branchData=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
-			elif sheetName=='batteryData':
-				self.batteryData=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
-			elif sheetName=='phsData':
-				self.phsData=(pd.read_excel(self.excelFile,sheetName)).to_numpy()	
-			elif sheetName=='probabilityData':
-				self.probabilityData=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
-			elif sheetName=='mustOnData':
-				self.mustOnData=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
-			elif sheetName=='mustOffData':
-				self.mustOffData=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
-			elif sheetName=='reliabilityIndexData':
-				self.reliabilityIndexData=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
+		self.standardGenData=(pd.read_excel(self.excelFile,'standardGenData')).to_numpy()
+		self.costGenData=(pd.read_excel(self.excelFile,'costGenData')).to_numpy()
+		self.freqRegulationGenData=(pd.read_excel(self.excelFile,'freqRegulationGenData')).to_numpy()
+		self.continuityGenData=(pd.read_excel(self.excelFile,'continuityGenData')).to_numpy()
+		self.loadData=(pd.read_excel(self.excelFile,'loadData')).to_numpy()
+		self.powerSun=(pd.read_excel(self.excelFile,'powerSun')).to_numpy()
+		self.powerWind=(pd.read_excel(self.excelFile,'powerWind')).to_numpy()
+		self.SRContingency=(pd.read_excel(self.excelFile,'SRContingency')).to_numpy()
+		self.SRPower=(pd.read_excel(self.excelFile,'SRPower')).to_numpy()
+		self.SRPercentage=(pd.read_excel(self.excelFile,'SRPercentage')).to_numpy()
+		self.busLoad=(pd.read_excel(self.excelFile,'busLoad')).to_numpy()
+		self.busSun=(pd.read_excel(self.excelFile,'busSun')).to_numpy()
+		self.busWind=(pd.read_excel(self.excelFile,'busWind')).to_numpy()
+		self.busData=(pd.read_excel(self.excelFile,'busData')).to_numpy()
+		self.branchData=(pd.read_excel(self.excelFile,'branchData')).to_numpy()
+		self.batteryData=(pd.read_excel(self.excelFile,'batteryData')).to_numpy()
+		self.phsData=(pd.read_excel(self.excelFile,'phsData')).to_numpy()	
+		self.probabilityData=(pd.read_excel(self.excelFile,'probabilityData')).to_numpy()
+		self.mustOnData=(pd.read_excel(self.excelFile,'mustOnData')).to_numpy()
+		self.mustOffData=(pd.read_excel(self.excelFile,'mustOffData')).to_numpy()
+		self.reliabilityIndexData=(pd.read_excel(self.excelFile,'reliabilityIndexData')).to_numpy()
 	
 	def inputDataCSV(self):
 		for csvName in self.dataList:

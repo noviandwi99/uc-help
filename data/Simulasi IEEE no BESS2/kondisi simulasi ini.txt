@@ -1,0 +1,5 @@
+• Tanpa BESS
+
+•Kondisi simulasi: 
+a) Kekangan batas frekuensi nadir yang digunakan adalah 47 Hz. 
+b) Batas deviasi frekuensi steady state 1 Hz, 

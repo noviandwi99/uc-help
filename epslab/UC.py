@@ -4,38 +4,60 @@ import pandas as pd
 import os
 import datetime
 import copy
+from . import DatasetType
 
 ## Main Function ##
 class UC:
 	"""Make Matrices necessary for cplex."""
-	def __init__(self):
+	def __init__(self, case_name, constraint, data_path, data_type):
 		self.tic=datetime.datetime.now()
-		self.caseName=''
+		self.caseName=case_name
 		self.globalVar()
+
+		self.data_type = data_type
+		if self.data_type == "EXCEL":
+			self.valid_extension = [".xlsx"]
+		elif self.data_type == "CSV":
+			self.valid_extension = [".csv"]
+
+		# enter constraints list
+		self.inputCons(constraint)
+		
+		# enter folder data path
+		self.inputDataPath(data_path)
+	
+	def run_simulation(self):
+		if 'consIslanding' in self.consList:
+			for data in self.dataList:
+				self.prepare_dataset(data)
+				self.run_UC()
+		else:
+			self.prepare_dataset()
+			self.run_UC()
 
 	def inputDataPath(self,dataPath):
 		self.dataPath=dataPath
-		
-		#ListDir
-		self.dataList=os.listdir(self.dataPath)
-		dataListTemp=copy.deepcopy(self.dataList)
-		for val in dataListTemp:
-			if val[-5:] != '.xlsx' and val[-4:] != '.xlsx' and val[-4:] != '.csv':
-				self.dataList.remove(val)
 
-		if len(self.dataList)==1:
-			#xlsx input
-			[excelFileName]=self.dataList
-			excelPath=os.path.join(self.dataPath,excelFileName)
-			self.excelFile=pd.ExcelFile(excelPath)
-			self.dataList=self.excelFile.sheet_names
+		# Get Dataset
+		self.dataList = []
+		for val in os.listdir(self.dataPath):
+			file_extension = os.path.splitext(val)[1]
+
+			if file_extension in self.valid_extension:
+				self.dataList.append(val)
+	
+	def prepare_dataset(self, data):
+		if self.data_type == "EXCEL":
+			file_path = os.path.join(self.dataPath, data)
+			self.excelFile=pd.ExcelFile(file_path)
+			self.sheet_names = self.excelFile.sheet_names
+			
 			self.inputDataExcel()
-		else:
-			#csv input
+		elif self.data_type == "CSV":
 			for i in range(len(self.dataList)):
 				self.dataList[i]=self.dataList[i].replace('.csv','')
+			
 			self.inputDataCSV()
-		pass
 
 	def getPath(self,name_mark=False):
 		#Make Output Folder
@@ -112,7 +134,7 @@ class UC:
 		epsilonNumber=1/cplex.infinity
 
 	def inputDataExcel(self):
-		for sheetName in self.dataList:
+		for sheetName in self.sheet_names:
 			if sheetName=='standardGenData':
 				self.standardGenData=(pd.read_excel(self.excelFile,sheetName)).to_numpy()
 			elif sheetName=='costGenData':
@@ -2038,6 +2060,13 @@ class UC:
 			print('nBat: ',self.numberOfBattery)
 	
 	def run_UC(self):
+		# Problem Formulation
+		self.makeProblem()
+
+		# Print Problem Parameters
+		self.printIndex()
+		self.printNumberOfData()
+
 		self.logPath=os.path.join(os.getcwd(),'log_UC.txt')
 		with open(self.logPath, 'w+') as fileTxt:
 			self.cplexClass.set_results_stream(fileTxt)
@@ -2056,6 +2085,13 @@ class UC:
 		self.reshapeOutputFlag=0
 		self.partialCostFlag=0
 		self.summaryDicFlag=0
+
+		# Print Output
+		self.printOutput()
+		self.partialCost(decimal_place=4)
+		self.getSummaryDic(print_summary_dic=True)
+		self.exportToCSV(name_mark=False)
+
 	
 	def reshapeOutput(self):
 		if self.reshapeOutputFlag==1:
@@ -2623,8 +2659,8 @@ class UC:
 		dF.to_csv(filePath,index=False)
 		pass
 
-	def exportToCSV(self,outputPath=0,name_mark=False):
-		if outputPath==0:
+	def exportToCSV(self,outputPath=None,name_mark=False):
+		if outputPath==None:
 			self.getPath(name_mark=name_mark)
 		else:
 			self.outputPath=outputPath

@@ -2,7 +2,9 @@ import os
 from epslab import UC
 
 # File Location
-inputFolderName='Islanding B IEEE' #Excel file name
+FOLDER_NAME='Islanding B IEEE' #Excel file name
+CURRENTPATH=os.getcwd() #alternatively: os.path.dirname(__file__)
+DATASET_PATH=os.path.join(CURRENTPATH,'data',FOLDER_NAME)
 
 # Constraints used (you can comment unused constraints)
 constraints=[
@@ -29,32 +31,16 @@ constraints=[
     # 'consPHS',
     # 'consRPrPHS',
     # 'consSCRPHS',
-    # 'consFixedSpeedPHS'
+    # 'consFixedSpeedPHS',
+    'consIslanding'
 ]
 
 # initiate
-theCase=UC()
+theCase=UC(
+    case_name="Islanding B IEEE",
+    constraint=constraints,
+    data_path=DATASET_PATH,
+    data_type="EXCEL"
+)
 
-# enter constraints list
-theCase.inputCons(constraints)
-
-# enter folder data path
-CURRENTPATH=os.getcwd() #alternatively: os.path.dirname(__file__)
-PATH=os.path.join(CURRENTPATH,'data',inputFolderName)
-theCase.inputDataPath(PATH) # folder path, not file path
-
-# Problem Formulation
-theCase.makeProblem()
-
-# Print Problem Parameters
-theCase.printIndex()
-theCase.printNumberOfData()
-
-# Run
-theCase.run_UC()
-
-# Print Output
-theCase.printOutput()
-theCase.partialCost(decimal_place=4)
-theCase.getSummaryDic(print_summary_dic=True)
-theCase.exportToCSV(name_mark=False)
+theCase.run_simulation()

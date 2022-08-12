@@ -1,9 +1,12 @@
 import pandas as pd
 import numpy as np
+import os
 
 class IslandingGenerator:
-    def __init__(self, dataset):
-        self.excel_file = pd.ExcelFile(dataset)
+    def __init__(self, data_path, filename):
+        self.excel_file = pd.ExcelFile(os.path.join(data_path, filename))
+        self.filename = filename
+        self.data_path = data_path
 
     def greeting(self):
         print("++++++++++++++++++++++++++++++")
@@ -12,6 +15,7 @@ class IslandingGenerator:
 
     def prompt_user(self):
         self.region_name = input("Region Name: ")
+        self.slack_bus = int(input("Slack Bus: "))
 
         self.number_of_gen = int(input("\nNumber of Generators: "))
         self.generator = list(map(int, input("Input Generator Number\n> ").split(", ")))[:self.number_of_gen]
@@ -84,7 +88,8 @@ class IslandingGenerator:
         self.powerWind.loc[0] = self.busWind.sum()
 
     def save_to_excel(self):
-        with pd.ExcelWriter('output.xlsx') as writer:  
+        new_filename = self.filename.split(".")[0] + "_" + self.region_name + ".xlsx"
+        with pd.ExcelWriter(f"{self.data_path}/{new_filename}") as writer:  
             self.standardGenData.to_excel(writer, index=False, sheet_name='standardGenData')
             self.costGenData.to_excel(writer, index=False, sheet_name='costGenData')
             self.freqRegulationGenData.to_excel(writer, index=False, sheet_name='freqRegulationGenData')
@@ -107,13 +112,21 @@ class IslandingGenerator:
             self.mustOffData.to_excel(writer, index=False, sheet_name='mustOffData')
             self.reliabilityIndexData.to_excel(writer, index=False, sheet_name='reliabilityIndexData')
 
-    def rename_bus(self):
+    def reindex(self):
+        # Before reindex check slackBus correct
+        if self.slack_bus not in self.standardGenData.loc[:, "Bus Location"].values:
+            raise ValueError("Invalid slack bus")
+        
+        self.busData.loc[0, "slackBus"] = self.bus.index(self.slack_bus) + 1
+
+        # Reindex bus in sheet stanardGenData
         for index, row in self.standardGenData.iterrows():
             if row['Bus Location'] not in self.bus:
                 raise ValueError("Bus Location not found")
             
             self.standardGenData.loc[index, "Bus Location"] = self.bus.index(row['Bus Location']) + 1
         
+        # Reindex bus in sheet branchData
         for index, row in self.branchData.iterrows():
             if row['from'] not in self.bus:
                 raise ValueError("Bus Location not found")
@@ -125,14 +138,13 @@ class IslandingGenerator:
                 raise ValueError("Bus Location not found")
             
             self.branchData.loc[index, "to"] = self.bus.index(row['to']) + 1
-    
-    def rename_number(self):
+
+        # Reindex unit and number        
         self.standardGenData.loc[:, "Unit"] = np.arange(1, self.standardGenData.shape[0] + 1)
         self.branchData.loc[:, "number"] = np.arange(1, self.branchData.shape[0] + 1)
         
     def generate(self):
         self.read_dataset()
         self.calculate_load()
-        self.rename_bus()
-        self.rename_number()
+        self.reindex()
         self.save_to_excel()

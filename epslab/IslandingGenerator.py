@@ -13,6 +13,7 @@ class IslandingGenerator:
         print("+ GENERATE ISLANDING DATASET +")
         print("++++++++++++++++++++++++++++++\n")
 
+    # Show prompt, to get input from user
     def prompt_user(self):
         self.region_name = input("Region Name: ")
         self.slack_bus = int(input("Slack Bus: "))
@@ -26,6 +27,7 @@ class IslandingGenerator:
         self.number_of_branch = int(input("\nNumber of Branches: "))
         self.branch = list(map(int, input("Input Branch Number\n> ").split(", ")))[:self.number_of_branch]
     
+    # Read excel file from specific sheet
     def read_dataset(self):
         self.standardGenData=pd.read_excel(self.excel_file,'standardGenData')
         self.standardGenData.index += 1
@@ -79,6 +81,7 @@ class IslandingGenerator:
 
         self.reliabilityIndexData=pd.read_excel(self.excel_file,'reliabilityIndexData')
     
+    # Calcuate load for each bus type
     def calculate_load(self):
         # Calculate bus load
         self.loadData.loc[0] = self.busLoad.sum()
@@ -87,6 +90,7 @@ class IslandingGenerator:
         # Calculate bus Wind
         self.powerWind.loc[0] = self.busWind.sum()
 
+    # Save to excel for every sheet
     def save_to_excel(self):
         new_filename = self.filename.split(".")[0] + "_" + self.region_name + ".xlsx"
         with pd.ExcelWriter(f"{self.data_path}/{new_filename}") as writer:  
@@ -112,8 +116,10 @@ class IslandingGenerator:
             self.mustOffData.to_excel(writer, index=False, sheet_name='mustOffData')
             self.reliabilityIndexData.to_excel(writer, index=False, sheet_name='reliabilityIndexData')
 
+    # This function will reindex bus (start from 1) for every region
     def reindex(self):
         # Before reindex check slackBus correct
+        # Correct means slackBus is in the generator list
         if self.slack_bus not in self.standardGenData.loc[:, "Bus Location"].values:
             raise ValueError("Invalid slack bus")
         

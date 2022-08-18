@@ -121,27 +121,27 @@ class IslandingGenerator:
         # Before reindex check slackBus correct
         # Correct means slackBus is in the generator list
         if self.slack_bus not in self.standardGenData.loc[:, "Bus Location"].values:
-            raise ValueError("Invalid slack bus")
+            raise ValueError("Invalid slack bus, slack bus must in generator")
         
         self.busData.loc[0, "slackBus"] = self.bus.index(self.slack_bus) + 1
 
         # Reindex bus in sheet stanardGenData
         for index, row in self.standardGenData.iterrows():
             if row['Bus Location'] not in self.bus:
-                raise ValueError("Bus Location not found")
+                raise ValueError(f"Bus Location: {row['Bus Location']} in sheet standardGenData not found in bus list")
             
             self.standardGenData.loc[index, "Bus Location"] = self.bus.index(row['Bus Location']) + 1
         
         # Reindex bus in sheet branchData
         for index, row in self.branchData.iterrows():
             if row['from'] not in self.bus:
-                raise ValueError("Bus Location not found")
+                raise ValueError(f"Bus Location (from): {row['from']} in sheet branchData not found in bus list")
             
             self.branchData.loc[index, "from"] = self.bus.index(row['from']) + 1
         
         for index, row in self.branchData.iterrows():
             if row['to'] not in self.bus:
-                raise ValueError("Bus Location not found")
+                raise ValueError(f"Bus Location (to): {row['to']} in sheet branchData not found in bus list")
             
             self.branchData.loc[index, "to"] = self.bus.index(row['to']) + 1
 
